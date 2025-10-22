@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Select } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,6 +19,14 @@ const LIMITS = [
   { value: "25", label: "25" },
   { value: "50", label: "50" },
   { value: "100", label: "100" },
+];
+
+const TIME_FILTERS = [
+  { value: "all", label: "All Time" },
+  { value: "24h", label: "Last 24 Hours" },
+  { value: "7d", label: "Last 7 Days" },
+  { value: "30d", label: "Last 30 Days" },
+  { value: "newest", label: "Newest First" },
 ];
 
 export function Filters() {
@@ -60,6 +68,20 @@ export function Filters() {
           {LIMITS.map((limit) => (
             <option key={limit.value} value={limit.value}>
               {limit.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium">Time:</label>
+        <Select
+          value={searchParams.get("timeFilter") || "all"}
+          onChange={(e) => updateParam("timeFilter", e.target.value)}
+        >
+          {TIME_FILTERS.map((filter) => (
+            <option key={filter.value} value={filter.value}>
+              {filter.label}
             </option>
           ))}
         </Select>
