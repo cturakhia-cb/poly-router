@@ -7,6 +7,7 @@ import { Market } from "@/types/market";
 import { TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { PlaceOrderDialog } from "@/components/trade/PlaceOrderDialog";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface MarketCardProps {
   market: Market;
@@ -81,17 +82,20 @@ export function MarketCard({ market }: MarketCardProps) {
               </Button>
             )}
             {market.url && (
-              <Button
-                size="sm"
-                variant="outline"
-                className={isPolymarket ? "flex-1" : "w-full"}
-                asChild
+              <a
+                href={market.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                  "h-9 px-3",
+                  isPolymarket ? "flex-1" : "w-full"
+                )}
               >
-                <a href={market.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  View
-                </a>
-              </Button>
+                <ExternalLink className="h-4 w-4 mr-1" />
+                View
+              </a>
             )}
           </div>
         </CardContent>
