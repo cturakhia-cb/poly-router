@@ -8,6 +8,8 @@ import { GamesList } from "@/components/sports/GamesList";
 import { LogDrawer } from "@/components/LogDrawer";
 import { Skeleton } from "@/components/ui/skeleton";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
