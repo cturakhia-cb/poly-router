@@ -14,6 +14,7 @@ import { Game, GameMarket, GameMarketsResponse } from "@/types/sports";
 import { api } from "@/lib/clientFetch";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface GameMarketsProps {
   game: Game;
@@ -97,11 +98,18 @@ export function GameMarkets({ game, open, onOpenChange }: GameMarketsProps) {
                     <p className="text-sm">{market.title}</p>
                   </div>
                   {market.url && (
-                    <Button size="sm" variant="ghost" asChild>
-                      <a href={market.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
+                    <a
+                      href={market.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        "h-9 px-3"
+                      )}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
                   )}
                 </div>
                 
