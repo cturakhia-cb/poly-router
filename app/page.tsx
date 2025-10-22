@@ -1,0 +1,46 @@
+"use client"
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Filters } from "@/components/Filters";
+import { MarketsGrid } from "@/components/MarketsGrid";
+import { GamesList } from "@/components/sports/GamesList";
+import { LogDrawer } from "@/components/LogDrawer";
+
+export default function Home() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Prediction Markets</h1>
+          <p className="text-muted-foreground">
+            Real-time market data across 7 platforms
+          </p>
+        </div>
+
+        <Tabs defaultValue="markets" className="w-full">
+          <TabsList>
+            <TabsTrigger value="markets">Markets</TabsTrigger>
+            <TabsTrigger value="sports">Sports</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="markets" className="space-y-6">
+            <Filters />
+            <MarketsGrid />
+          </TabsContent>
+
+          <TabsContent value="sports" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold mb-2">NFL Games</h2>
+              <p className="text-sm text-muted-foreground">
+                View betting markets across multiple platforms for upcoming NFL games
+              </p>
+            </div>
+            <GamesList />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <LogDrawer />
+    </div>
+  );
+}
