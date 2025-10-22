@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -15,6 +15,7 @@ import { api } from "@/lib/clientFetch";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface GameMarketsProps {
   game: Game;
@@ -55,7 +56,41 @@ export function GameMarkets({ game, open, onOpenChange }: GameMarketsProps) {
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {game.away_team.name} @ {game.home_team.name}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {game.away_team.logo_url && (
+                  <div className="relative w-8 h-8 shrink-0">
+                    <Image
+                      src={game.away_team.logo_url}
+                      alt={game.away_team.name}
+                      fill
+                      className="object-contain rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+                <span>{game.away_team.name}</span>
+              </div>
+              <span className="text-muted-foreground">@</span>
+              <div className="flex items-center gap-2">
+                {game.home_team.logo_url && (
+                  <div className="relative w-8 h-8 shrink-0">
+                    <Image
+                      src={game.home_team.logo_url}
+                      alt={game.home_team.name}
+                      fill
+                      className="object-contain rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+                <span>{game.home_team.name}</span>
+              </div>
+            </div>
           </DialogTitle>
           <DialogDescription>
             Markets available across platforms
@@ -71,9 +106,7 @@ export function GameMarkets({ game, open, onOpenChange }: GameMarketsProps) {
         )}
 
         {error && (
-          <div className="p-4 text-center text-destructive">
-            {error}
-          </div>
+          <div className="p-4 text-center text-destructive">{error}</div>
         )}
 
         {!loading && !error && markets.length === 0 && (
@@ -93,7 +126,9 @@ export function GameMarkets({ game, open, onOpenChange }: GameMarketsProps) {
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{market.platform}</Badge>
-                      <span className="text-sm font-medium">{market.market_type}</span>
+                      <span className="text-sm font-medium">
+                        {market.market_type}
+                      </span>
                     </div>
                     <p className="text-sm">{market.title}</p>
                   </div>
@@ -112,14 +147,18 @@ export function GameMarkets({ game, open, onOpenChange }: GameMarketsProps) {
                     </a>
                   )}
                 </div>
-                
+
                 {market.odds && Object.keys(market.odds).length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
                     {Object.entries(market.odds).map(([outcome, odd]) => (
                       <div key={outcome} className="flex justify-between">
-                        <span className="text-muted-foreground">{outcome}:</span>
+                        <span className="text-muted-foreground">
+                          {outcome}:
+                        </span>
                         <span className="font-semibold">
-                          {typeof odd === "number" ? (odd * 100).toFixed(1) + "%" : odd}
+                          {typeof odd === "number"
+                            ? (odd * 100).toFixed(1) + "%"
+                            : odd}
                         </span>
                       </div>
                     ))}

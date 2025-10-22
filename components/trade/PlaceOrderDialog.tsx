@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react";
 import {
@@ -13,8 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Market } from "@/types/market";
-import { PlaceOrderRequest, OrderType, OrderSide, Outcome } from "@/types/trade";
+import {
+  PlaceOrderRequest,
+  OrderType,
+  OrderSide,
+  Outcome,
+} from "@/types/trade";
 import { api } from "@/lib/clientFetch";
+import { getTradingAdapter, isTradingSupported } from "@/lib/trading/registry";
 
 interface PlaceOrderDialogProps {
   market: Market;
@@ -22,7 +28,11 @@ interface PlaceOrderDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialogProps) {
+export function PlaceOrderDialog({
+  market,
+  open,
+  onOpenChange,
+}: PlaceOrderDialogProps) {
   const [orderType, setOrderType] = useState<OrderType>("market");
   const [outcome, setOutcome] = useState<Outcome>("yes");
   const [side, setSide] = useState<OrderSide>("buy");
@@ -32,22 +42,38 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const adapter = getTradingAdapter(market.platform);
+  const tradingSupported = isTradingSupported(market.platform);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+
+    if (!adapter) {
+      setError(`Trading not supported for ${market.platform}`);
+      return;
+    }
+
+    const payload: PlaceOrderRequest = {
+      marketId: market.id,
+      outcome,
+      side,
+      size: parseFloat(size),
+      orderType,
+      ...(orderType === "limit" && { price: parseFloat(price) }),
+    };
+
+    // Validate order
+    const validationError = adapter.validateOrder(payload);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const payload: PlaceOrderRequest = {
-        marketId: market.id,
-        outcome,
-        side,
-        size: parseFloat(size),
-        orderType,
-        ...(orderType === "limit" && { price: parseFloat(price) }),
-      };
-
       await api("/api/trade/polymarket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,7 +83,9 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
       setSuccess(true);
     } catch (err: any) {
       if (err.status === 501) {
-        setError("Trading is not yet implemented. Wallet integration coming soon!");
+        setError(
+          "Trading is not yet implemented. Wallet integration coming soon!"
+        );
       } else {
         setError(err.message || "Failed to place order");
       }
@@ -74,22 +102,35 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => {
-      onOpenChange(open);
-      if (!open) resetForm();
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (!open) resetForm();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Place Order</DialogTitle>
+          <DialogTitle>Place Order - {market.platform}</DialogTitle>
           <DialogDescription className="line-clamp-2">
             {market.title}
           </DialogDescription>
         </DialogHeader>
 
+        {!tradingSupported && (
+          <div className="p-3 text-sm bg-amber-100 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 rounded-md">
+            Trading is not yet available for {market.platform}. Wallet
+            integration coming soon!
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Order Type</label>
-            <Select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)}>
+            <Select
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value as OrderType)}
+            >
               <option value="market">Market</option>
               <option value="limit">Limit</option>
             </Select>
@@ -97,7 +138,10 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Outcome</label>
-            <Select value={outcome} onChange={(e) => setOutcome(e.target.value as Outcome)}>
+            <Select
+              value={outcome}
+              onChange={(e) => setOutcome(e.target.value as Outcome)}
+            >
               <option value="yes">YES</option>
               <option value="no">NO</option>
             </Select>
@@ -105,7 +149,10 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Side</label>
-            <Select value={side} onChange={(e) => setSide(e.target.value as OrderSide)}>
+            <Select
+              value={side}
+              onChange={(e) => setSide(e.target.value as OrderSide)}
+            >
               <option value="buy">Buy</option>
               <option value="sell">Sell</option>
             </Select>
@@ -153,10 +200,14 @@ export function PlaceOrderDialog({ market, open, onOpenChange }: PlaceOrderDialo
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !tradingSupported}>
               {loading ? "Placing..." : "Place Order"}
             </Button>
           </DialogFooter>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { api } from "@/lib/clientFetch";
 import { Market, MarketsResponse } from "@/types/market";
 import { MarketCard } from "@/components/MarketCard";
@@ -53,12 +53,46 @@ const filterMarketsByTime = (
   return filteredMarkets;
 };
 
+const sortMarkets = (markets: Market[], sortBy: string): Market[] => {
+  const sorted = [...markets];
+
+  switch (sortBy) {
+    case "volume":
+      return sorted.sort((a, b) => (b.volume || 0) - (a.volume || 0));
+    case "liquidity":
+      return sorted.sort((a, b) => (b.liquidity || 0) - (a.liquidity || 0));
+    case "change":
+      return sorted.sort(
+        (a, b) => (b.price_change_24h || 0) - (a.price_change_24h || 0)
+      );
+    case "change-low":
+      return sorted.sort(
+        (a, b) => (a.price_change_24h || 0) - (b.price_change_24h || 0)
+      );
+    default:
+      return sorted;
+  }
+};
+
+const filterByStatus = (markets: Market[], status: string): Market[] => {
+  if (status === "all") return markets;
+
+  return markets.filter((market) => {
+    const marketStatus = market.status?.toLowerCase() || "active";
+    return marketStatus === status;
+  });
+};
+
 export function MarketsGrid() {
   const searchParams = useSearchParams();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
+  const [displayedMarkets, setDisplayedMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     const fetchMarkets = async () => {
@@ -104,15 +138,56 @@ export function MarketsGrid() {
     searchParams.get("timeFilter"),
   ]);
 
-  // Apply time filtering whenever markets or timeFilter changes
+  // Apply filtering and sorting whenever markets or params change
   useEffect(() => {
     const timeFilter = searchParams.get("timeFilter") || "all";
+    const sortBy = searchParams.get("sort") || "default";
+    const status = searchParams.get("status") || "all";
     const limit = parseInt(searchParams.get("limit") || "25");
 
-    const filtered = filterMarketsByTime(markets, timeFilter);
-    // Apply limit after filtering
+    let filtered = filterMarketsByTime(markets, timeFilter);
+    filtered = filterByStatus(filtered, status);
+    filtered = sortMarkets(filtered, sortBy);
+
+    // Apply limit after all filtering and sorting
     setFilteredMarkets(filtered.slice(0, limit));
+    setPage(1); // Reset pagination
   }, [markets, searchParams]);
+
+  // Update displayed markets for infinite scroll
+  useEffect(() => {
+    const itemsToShow = page * ITEMS_PER_PAGE;
+    setDisplayedMarkets(filteredMarkets.slice(0, itemsToShow));
+  }, [filteredMarkets, page]);
+
+  // Infinite scroll observer
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const target = entries[0];
+      if (
+        target.isIntersecting &&
+        displayedMarkets.length < filteredMarkets.length
+      ) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    [displayedMarkets.length, filteredMarkets.length]
+  );
+
+  useEffect(() => {
+    const option = {
+      root: null,
+      rootMargin: "20px",
+      threshold: 0,
+    };
+    const observer = new IntersectionObserver(handleObserver, option);
+
+    if (loaderRef.current) observer.observe(loaderRef.current);
+
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [handleObserver]);
 
   if (loading) {
     return (
@@ -132,7 +207,7 @@ export function MarketsGrid() {
     );
   }
 
-  if (filteredMarkets.length === 0 && !loading) {
+  if (displayedMarkets.length === 0 && !loading) {
     const timeFilter = searchParams.get("timeFilter");
     const timeFilterLabel =
       timeFilter === "24h"
@@ -160,23 +235,32 @@ export function MarketsGrid() {
     );
   }
 
-  const timeFilter = searchParams.get("timeFilter");
-  const showCount =
-    timeFilter && timeFilter !== "all" && filteredMarkets.length > 0;
+  const showCount = filteredMarkets.length > 0;
+  const hasMore = displayedMarkets.length < filteredMarkets.length;
 
   return (
     <>
       {showCount && (
         <div className="text-sm text-muted-foreground mb-4">
-          Found {filteredMarkets.length} market
-          {filteredMarkets.length !== 1 ? "s" : ""} matching your time filter
+          Showing {displayedMarkets.length} of {filteredMarkets.length} market
+          {filteredMarkets.length !== 1 ? "s" : ""}
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMarkets.map((market) => (
+        {displayedMarkets.map((market) => (
           <MarketCard key={`${market.platform}-${market.id}`} market={market} />
         ))}
       </div>
+
+      {hasMore && (
+        <div ref={loaderRef} className="flex justify-center py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-64" />
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -29,6 +29,21 @@ const TIME_FILTERS = [
   { value: "newest", label: "Newest First" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "default", label: "Default" },
+  { value: "volume", label: "Volume (High to Low)" },
+  { value: "liquidity", label: "Liquidity (High to Low)" },
+  { value: "change", label: "24h Change (High to Low)" },
+  { value: "change-low", label: "24h Change (Low to High)" },
+];
+
+const STATUS_FILTERS = [
+  { value: "all", label: "All Statuses" },
+  { value: "active", label: "Active" },
+  { value: "closed", label: "Closed" },
+  { value: "resolved", label: "Resolved" },
+];
+
 export function Filters() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,47 +59,77 @@ export function Filters() {
   };
 
   return (
-    <div className="flex flex-wrap gap-4 items-center">
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Platform:</label>
-        <Select
-          value={searchParams.get("platform") || "all"}
-          onChange={(e) => updateParam("platform", e.target.value)}
-        >
-          {PLATFORMS.map((platform) => (
-            <option key={platform.value} value={platform.value}>
-              {platform.label}
-            </option>
-          ))}
-        </Select>
-      </div>
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Platform:</label>
+          <Select
+            value={searchParams.get("platform") || "all"}
+            onChange={(e) => updateParam("platform", e.target.value)}
+          >
+            {PLATFORMS.map((platform) => (
+              <option key={platform.value} value={platform.value}>
+                {platform.label}
+              </option>
+            ))}
+          </Select>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Limit:</label>
-        <Select
-          value={searchParams.get("limit") || "25"}
-          onChange={(e) => updateParam("limit", e.target.value)}
-        >
-          {LIMITS.map((limit) => (
-            <option key={limit.value} value={limit.value}>
-              {limit.label}
-            </option>
-          ))}
-        </Select>
-      </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Status:</label>
+          <Select
+            value={searchParams.get("status") || "all"}
+            onChange={(e) => updateParam("status", e.target.value)}
+          >
+            {STATUS_FILTERS.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </Select>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Time:</label>
-        <Select
-          value={searchParams.get("timeFilter") || "all"}
-          onChange={(e) => updateParam("timeFilter", e.target.value)}
-        >
-          {TIME_FILTERS.map((filter) => (
-            <option key={filter.value} value={filter.value}>
-              {filter.label}
-            </option>
-          ))}
-        </Select>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Time:</label>
+          <Select
+            value={searchParams.get("timeFilter") || "all"}
+            onChange={(e) => updateParam("timeFilter", e.target.value)}
+          >
+            {TIME_FILTERS.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Sort:</label>
+          <Select
+            value={searchParams.get("sort") || "default"}
+            onChange={(e) => updateParam("sort", e.target.value)}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Limit:</label>
+          <Select
+            value={searchParams.get("limit") || "25"}
+            onChange={(e) => updateParam("limit", e.target.value)}
+          >
+            {LIMITS.map((limit) => (
+              <option key={limit.value} value={limit.value}>
+                {limit.label}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
     </div>
   );
